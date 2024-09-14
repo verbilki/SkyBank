@@ -87,15 +87,11 @@ pip install openpyxl
     + [Модуль masks.py](#модуль-masks-py)
     + [Модуль external_api.py](#модуль-external_api-py)
         - [Функция get_exchange_rate](#функция-get_exchange_rate)
-    + [Модуль read_from_file.py](#модуль-read_from_file-py)
-        - [Функция test_read_transactions_from_csv](#функция-test_read_transactions_from_csv)
-        - [Функция test_read_transactions_from_excel](#функция-test_read_transactions_from_excel)
    + [Модуль widget.py](#модуль-widget-py)
 
 * [папка tests](#tests)
     + [Модуль глобальных фикстур conftest.py](#conftestpy)
     + [Модуль tests/test_masks.py](#модуль-tests-test_masks-py)
-    + [Модуль tests/test_read_from_file.py](#модуль-tests-read_from_file-py)
     + [Модуль tests/test_widget.py](#модуль-tests-test_widget-py)
 
 ## Папка src
@@ -282,33 +278,6 @@ formatted_date = format_str_date("2023-01-01T12:34:56.789012")
 - `test_get_mask_account_correct_input()`:
   This test function checks if the `get_mask_account` function returns the expected masked account number
   when given a valid account number.
-
-
-### Модуль tests/test_read_from_file.py
-
-This module contains unit tests for functions in the src/read_from_file module.
-
-#### Функция test_read_transactions_from_csv
-
-Description: This function tests the read_transactions_from_csv function by mocking the pd.read_csv function.
-It asserts that the function returns the expected list of transactions when given an existing CSV file.
-
-Parameters:
-mock_read_csv (MagicMock): A mock object for pd.read_csv function.
-get_df (pd.DataFrame): A pandas DataFrame containing the expected transactions.
-
-Returns: None. The function asserts the behavior of read_transactions_from_csv function.
-
-#### Функция test_read_transactions_from_excel
-
-Description: This function tests the read_transactions_from_excel function by mocking the pd.read_excel function.
-It asserts that the function returns the expected list of transactions when given an existing Excel file.
-
-Parameters:
-mock_read_excel (MagicMock): A mock object for pd.read_excel function.
-get_df (pd.DataFrame): A pandas DataFrame containing the expected transactions.
-
-Returns: None. The function asserts the behavior of read_transactions_from_excel function.
 
 
 ## 7. Настройка и использование фреймворка unit-тестирования Pytest
