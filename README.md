@@ -12,7 +12,8 @@ git@github.com:verbilki/SkyBank.git
 ```
 
 Найти в корне проекта файл .env_template, скопировать его в .env и заполнить конфиденциальными данными
-(например, для ключа API_KEY ввести токен подключения к API конвертации валют ).
+(например, для ключа FMP_API_KEY ввести токен подключения к API котировок биржевых
+активов https://financialmodelingprep.com/api/v3/stock/).
 
 1. Создать в PyCharm виртуальное окружение
 
@@ -50,7 +51,7 @@ poetry install
 ```
 
 4. Установить линтер flake8, анализатор статического кода mypy, форматтеры (black, isort)
-на основании файла конфигурации pyproject.toml.
+   на основании файла конфигурации pyproject.toml.
 
 Пример настройки flake8, black, isort и mypy в файле pyproject.toml:
 
@@ -65,224 +66,148 @@ poetry install
 
 5. Установить в терминале дополнительные пакеты:
 
+Если в файле pyproject.toml отсутствуют записи о пакетах requests и python-dotenv,
+то их необходимо установить из терминала:
+
 ```bash
-poetry add requests  
+poetry add requests
 poetry add python-dotenv
 
-pip install pandas
-pip install pandas-stubs
-pip install openpyxl
+pip install pandas pandas-stubs openpyxl numpy types-requests
 ```
 
 6. Запуск приложения
-Для запуска приложения необходимо запустить на исполнение модуль src/main.py, состоящий из единственной функции main().
+   Для запуска приложения необходимо запустить на исполнение модуль src/main.py, состоящий из единственной функции
+   main().
 
-7. Функциональные модули
+Приложение предоставляет три функциональности:
 
-* [Папка src](#папка-src)
-    + [Головной модуль main.py](#модуль-main-py)
-    + [Модуль utils.py](#модуль-utils-py)
-        - [Функция read_transactions_from_json](#read_transactions_from_json)
-        - [Функция get_transaction_amount](#get_transaction_amount)
-    + [Модуль masks.py](#модуль-masks-py)
-    + [Модуль external_api.py](#модуль-external_api-py)
-        - [Функция get_exchange_rate](#функция-get_exchange_rate)
-   + [Модуль widget.py](#модуль-widget-py)
+### 1. Главная страница
 
-* [папка tests](#tests)
-    + [Модуль глобальных фикстур conftest.py](#conftestpy)
-    + [Модуль tests/test_masks.py](#модуль-tests-test_masks-py)
-    + [Модуль tests/test_widget.py](#модуль-tests-test_widget-py)
+Сервис генерации базовых статистических данных в формате JSON по заданной дате, содержащий:
+* приветствие,
+* актуальные обменные курсы валют по заданному списку
+* текущие котировки биржевых активов на американских биржах,
+* также данные по каждой карте (включая номер карты, общую сумму расходов и кешбэк),
+* топ-5 транзакций по абсолютной сумме платежа.
 
-## Папка src
+Валюты и акции для отображения на Главной странице задаются пользователем в файле user_settings.json в корне проекта.
+Данные для анализа берутся за период с начала месяца по текущую дату.
 
-### Модуль utils.py
+Пример JSON-ответа:
 
-#### Функция read_transactions_from_json
-
-Назначение: Reads transactions from a JSON file specified by the `json_file_path` argument.
-
-Args:
-json_file_path (str)`: The path to the JSON file containing transactions.
-
-Returns:
-list[dict]`: A list of dictionaries representing transactions.
-Each dictionary contains keys for the transaction's ID, state, date,
-operation amount, description, from account, and to account.
-Returns an empty list if the file cannot be opened or if the
-deserialized data is not a list.
-
-Raises: `json.JSONDecodeError`
-
-#### функция get_transaction_amount
-
-Назначение: получить объём заданной транзакции в рублях с учётом возможной конвертации валюты.
-Args: transaction (dict[str, Any]): A dictionary representing a transaction.
-
-Returns:
-  float: The amount of the transaction. If the transaction is in USD, an exchange rate is
-  requested from the external API.
-
-### Модуль external_api.py
-
-#### Функция get_exchange_rate
-
-Назначение: получить текущий обменный курс иностранной валюты к рублю из внешнего API.
-Args: None
-Returns: `float`: The exchange rate.
-
-### Модуль masks.py
-
-- `get_mask_card_number(card_number: str) -> str`:
-  This function takes a bank card number as input and returns a masked version of it.
-  The masked card number will have the first 6 digits, followed by "******", and the last 4 digits visible.
-  If the input card number is empty, an empty string is returned. The function also logs relevant information
-  using the provided logger.
-
-  If the card number contains non-digit characters, a `ValueError` is raised with a message indicating
-  that the card number should only contain digits. If the card number has a length other than 16,
-  a `ValueError` is raised with a message indicating that the card number should be 16 digits long.
-
-  The function uses the `dotenv` library to load environment variables from a `.env` file.
-  The `BANK_CARD_LAST_VISIBLE_DIGITS` environment variable is used to determine the number of visible digits
-  at the end of the masked card number. If the variable is not set, the default value is 4.
-
-- `get_mask_account(account_number: str) -> str`:
-  This function takes a bank account number as input and returns a masked version of it.
-  The masked account number will have the first 2 characters visible, followed by "**", 
-  and the last 4 digits visible. If the input account number is empty, an empty string is returned.
-  The function also logs relevant information using the provided logger.
-
-  If the account number contains non-digit characters, a `ValueError` is raised with a message
-  indicating that the account number should only contain digits. If the account number has a length
-  other than 20, a `ValueError` is raised with a message indicating that the account number should be 20 digits long.
-
-  The function uses the `dotenv` library to load environment variables from a `.env` file.
-  The `BANK_CARD_LAST_VISIBLE_DIGITS` environment variable is used to determine the number of visible digits
-  at the end of the masked account number. If the variable is not set, the default value is 4.
-
-### read_transactions_from_csv(file_path: str) -> list[dict[str, Any]]
-
-Reads transactions from a CSV file specified by the `file_path` argument.
-
-#### Arguments
-
-- `file_path` (str): The path to the CSV file containing transactions. The file should be semicolon-separated.
-
-#### Returns
-
-- list[dict[str, Any]]: A list of dictionaries representing transactions.
-  Each dictionary contains keys for the transaction's ID, state, date, operation amount, description,
-  from account, and to account. Returns an empty list if the file cannot be opened
-  or if the deserialized data is not a list.
-
-#### Note
-
-Any keys with a value of 0 are removed from the final dictionary.
-
-
-### read_transactions_from_excel(file_path: str) -> list[dict[str, Any]]
-
-Reads transactions from an Excel file specified by the `file_path` argument.
-
-#### Arguments
-
-- `file_path` (str): The path to the Excel file containing transactions.
-  The file should be in a format compatible with pandas' read_excel function.
-
-#### Returns
-
-- list[dict[str, Any]]: A list of dictionaries representing transactions.
-  Each dictionary contains keys for the transaction's ID, state, date, operation amount, description, 
-  from account, and to account. Returns an empty list if the file cannot be opened
-  or if the deserialized data is not a list.
-
-#### Note
-
-Any keys with a value of 0 are removed from the final dictionary.
-
-### Модуль widget.py
-================
-
-#### Функция mask_account_card
-Description: The mask_account_card function takes a card or account number as input
-             and returns a masked version of the number.
-
-Parameters: card_or_acc_number (str): The card or account number to be masked.
-Returns: str: The masked card or account number.
-
-Example:
-```
-masked_number = mask_account_card("Visa Platinum 7000792289606361")
-print(masked_number)  # Output: "Visa Platinum 7000 79** **** 6361"
+```commandline
+{
+  "greeting": "Добрый день",
+  "cards": [
+    {
+      "last_digits": "5814",
+      "total_spent": 1262.00,
+      "cashback": 12.62
+    },
+    {
+      "last_digits": "7512",
+      "total_spent": 7.94,
+      "cashback": 0.08
+    }
+  ],
+  "top_transactions": [
+    {
+      "date": "21.12.2021",
+      "amount": 1198.23,
+      "category": "Переводы",
+      "description": "Перевод Кредитная карта. ТП 10.2 RUR"
+    },
+    {
+      "date": "20.12.2021",
+      "amount": 829.00,
+      "category": "Супермаркеты",
+      "description": "Лента"
+    },
+    {
+      "date": "20.12.2021",
+      "amount": 421.00,
+      "category": "Различные товары",
+      "description": "Ozon.ru"
+    },
+    {
+      "date": "16.12.2021",
+      "amount": -14216.42,
+      "category": "ЖКХ",
+      "description": "ЖКУ Квартира"
+    },
+    {
+      "date": "16.12.2021",
+      "amount": 453.00,
+      "category": "Бонусы",
+      "description": "Кешбэк за обычные покупки"
+    }
+  ],
+  "currency_rates": [
+    {
+      "currency": "USD",
+      "rate": 73.21
+    },
+    {
+      "currency": "EUR",
+      "rate": 87.08
+    }
+  ],
+  "stock_prices": [
+    {
+      "stock": "AAPL",
+      "price": 150.12
+    },
+    {
+      "stock": "AMZN",
+      "price": 3173.18
+    },
+    {
+      "stock": "GOOGL",
+      "price": 2742.39
+    },
+    {
+      "stock": "MSFT",
+      "price": 296.71
+    },
+    {
+      "stock": "TSLA",
+      "price": 1007.08
+    }
+  ]
+}
 ```
 
-#### Функция format_str_date
-Description: The format_str_date function takes a date string as input and returns a formatted date string.
+### 2. Доходы по инвесткопилке
 
-Parameters: date_string (str): The date string to be formatted.
-Returns: str: The formatted date string.
-Example:
-```
-formatted_date = format_str_date("2023-01-01T12:34:56.789012")
-print(formatted_date)  # Output: "2023-01-01 12:34:56.789012"
-```
-Note: The format_str_date function is not fully implemented in the provided code snippet, 
-so the example output is hypothetical.
+Сервис рассчитывает сумму, которую можно было бы отложить на Инвесткопилку в заданном месяце.
+При первом запуске пользователь устанавливает комфортный порог округления трат: *10*, *50* или *100* рублей.
 
-Usage: To use the functions in the widget module, simply import the module and call the desired function:
+***Например***
 
-```
-from src.widget import mask_account_card, format_str_date
+*При настройке шага округления в 50 ₽, покупка на 1712 ₽ автоматически округлится до 1750 ₽, и 38 ₽ попадут
+в Инвесткопилку.*
 
-masked_number = mask_account_card("Visa Platinum 7000792289606361")
-formatted_date = format_str_date("2023-01-01T12:34:56.789012")
+Формат JSON-результата:
+
+```commandline
+{"month": "2024-08", "investment_amount": 204.5}
 ```
 
-### Модуль tests/test_utils.py 
+По умолчанию для анализа берется текущий месяц.
 
-Тесты для функций модуля src/utils.py.
+### 3. Траты по заданной категории
 
-### Модуль tests/test_external_api.py
+Для формирования отчета берётся интервал в три месяца от заданной даты.
+Выгрузка отчёта по расходным операциям возможна в трёх форматах *.json, .xlxs* и *.csv* (по умолчанию - *.json*).
+Отчеты сохраняются в папке *data/*
+с названием формата *rspending_by_cat_<Выбранная категория трат>.<выбранное расширение>*.
 
-Тесты для функций модуля src/external_api.py.
-
-### Модуль tests/test_masks.py
-
-- `test_get_mask_card_number_empty_input()`:
-  This test function checks if the `get_mask_card_number` function returns an empty string when given an empty input.
-
-- `test_get_mask_card_number_non_digit_characters()`:
-  This test function checks if the `get_mask_card_number` function raises a `ValueError`
-  when given a card number containing non-digit characters.
-
-- `test_get_mask_card_number_incorrect_length()`:
-  This test function checks if the `get_mask_card_number` function raises a `ValueError`
-  when given a card number with an incorrect length.
-
-- `test_get_mask_card_number_correct_input()`:
-  This test function checks if the `get_mask_card_number` function returns the expected masked card number
-  when given a valid card number.
-
-- `test_get_mask_account_empty_input()`:
-  This test function checks if the `get_mask_account` function returns an empty string when given an empty input.
-
-- `test_get_mask_account_non_digit_characters()`:
-  This test function checks if the `get_mask_account` function raises a `ValueError` 
-  when given an account number containing non-digit characters.
-
-- `test_get_mask_account_incorrect_length()`:
-  This test function checks if the `get_mask_account` function raises a `ValueError` 
-  when given an account number with an incorrect length.
-
-- `test_get_mask_account_correct_input()`:
-  This test function checks if the `get_mask_account` function returns the expected masked account number
-  when given a valid account number.
-
+Для выхода из приложения необходимо в главном меню приложения выбрать опцию *4. Выход*.
 
 ## 7. Настройка и использование фреймворка unit-тестирования Pytest
 
-Исходный код модулей покрыт юнит-тестами Pytest на более, чем 88%. Для запуска выполните команды:
+Исходный код модулей покрыт юнит-тестами Pytest на более, чем 80%. Для запуска выполните команды:
 
 ```bash
 poetry add --group dev pytest # установка pytest в виртуальное окружение приложения
